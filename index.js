@@ -8,7 +8,7 @@ require('dotenv').config();
 const corsConfig = {
 	origin: '*',
 	credential: true,
-	methods: ['GET', 'POST', 'PUT', 'DELETE'],
+	methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
 };
 app.use(cors(corsConfig));
 app.use(express.json());
@@ -37,15 +37,32 @@ async function run() {
 		const menuCollection = database.collection('menu');
 		const reviewsCollection = database.collection('reviews');
 		const cartsCollection = database.collection('carts');
+		const usersCollection = database.collection('users');
+		app.get('/users', async (req, res) => {
+			const result = await usersCollection.find().toArray();
+			res.send(result);
+		});
+		app.post('/users', async (req, res) => {
+			const user = req.body;
+			const query = { email: user.email };
+			const existingUser = await usersCollection.findOne(query);
+			if (existingUser) {
+				return res.send({ message: ' user already exists' });
+			}
+			const result = await usersCollection.insertOne(user);
+			res.send(result);
+		});
+		// menu related api
 		app.get('/menu', async (req, res) => {
 			const result = await menuCollection.find().toArray();
 			res.send(result);
 		});
+		//reviews related api
 		app.get('/reviews', async (req, res) => {
 			const result = await reviewsCollection.find().toArray();
 			res.send(result);
 		});
-		//cart collection
+		//cart collection api
 		app.post('/carts', async (req, res) => {
 			const item = req.body;
 			console.log(item);
@@ -65,6 +82,17 @@ async function run() {
 			const id = req.params.id;
 			const query = { _id: new ObjectId(id) };
 			const result = await cartsCollection.deleteOne(query);
+			res.send(result);
+		});
+		app.patch('/users/admin/:id', async (req, res) => {
+			const id = req.params.id;
+			const filter = { _id: new ObjectId(id) };
+			const updateDoc = {
+				$set: {
+					role: 'admin',
+				},
+			};
+			const result = await usersCollection.updateOne(filter, updateDoc);
 			res.send(result);
 		});
 		// Send a ping to confirm a successful connection
