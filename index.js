@@ -4,6 +4,7 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 //middleware
 const corsConfig = {
 	origin: '*',
@@ -38,6 +39,12 @@ async function run() {
 		const reviewsCollection = database.collection('reviews');
 		const cartsCollection = database.collection('carts');
 		const usersCollection = database.collection('users');
+		//jwt
+		app.post('/jwt', (req, res) => {
+			const user = req.body;
+			const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+			res.send({ token });
+		});
 		app.get('/users', async (req, res) => {
 			const result = await usersCollection.find().toArray();
 			res.send(result);
